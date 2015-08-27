@@ -13,6 +13,7 @@ namespace raknet
     public class testServer : IHttpHandler
     {
         GameList gamelist;
+        Object _GamelistNullLock = new Object();
 
         public void ProcessRequest(HttpContext context)
         {
@@ -21,7 +22,13 @@ namespace raknet
             // instance thanks to IsReusable being true
             if (gamelist == null)
             {
-                gamelist = new GameList((Global)(context.ApplicationInstance));
+                lock(_GamelistNullLock)
+                {
+                    if (gamelist == null)
+                    {
+                        gamelist = new GameList((Global)(context.ApplicationInstance));
+                    }
+                }
             }
 
             switch (context.Request.RequestType)
