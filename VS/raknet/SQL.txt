@@ -1,0 +1,31 @@
+﻿CREATE TABLE gamelist (
+    rowId       INTEGER      PRIMARY KEY
+                             NOT NULL,
+    rowPW       VARCHAR (16) NOT NULL,
+    addr        VARCHAR (21) NOT NULL,
+    lastUpdate  DATETIME     NOT NULL,
+    timeoutSec  INTEGER      NOT NULL,
+    clientReqId INTEGER      NOT NULL,
+    gameId      VARCHAR (31) NOT NULL
+);
+
+
+CREATE TABLE gameattr (
+    gameRowId INTEGER      REFERENCES gamelist (rowId) ON DELETE CASCADE
+                           NOT NULL,
+    [key]     VARCHAR (15) NOT NULL,
+    type      INTEGER      NOT NULL,
+    string    STRING (255),
+    integer   INTEGER,
+    PRIMARY KEY (
+        gameRowId ASC,
+        [key] ASC
+    )
+);
+
+
+CREATE TRIGGER delete_attrs BEFORE DELETE ON gamelist FOR EACH ROW
+BEGIN
+    DELETE FROM gameattr
+          WHERE gameattr.gameRowId = OLD.rowID;
+END;

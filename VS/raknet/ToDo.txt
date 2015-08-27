@@ -1,0 +1,2 @@
+﻿Ensure all aspects of the protocal from API_Raknet.txt are correct.
+Best method may be to paste the contents below and delete the line items as they are implemented/verified.
