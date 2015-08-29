@@ -44,14 +44,14 @@ namespace raknet
             global.SingleThreadDatabaseInterface.UpdateGame(rowId, lastUpdate, timeoutSec, clientReqId, iP, customValues);
         }
 
-        public void CheckGame(string iP, long clientReqId, out long qryRowId, out string qryRowPW)
+        public void CheckGame(string iP, long? clientReqId, out long qryRowId, out string qryRowPW)
         {
             global.SingleThreadDatabaseInterface.CheckGame(iP, clientReqId, out qryRowId, out qryRowPW);
         }
 
-        public void CheckGame(long rowId, out string qryRowPW)
+        public void CheckGame(long rowId, out long qryRowId, out string qryRowPW)
         {
-            global.SingleThreadDatabaseInterface.CheckGame(rowId, out qryRowPW);
+            global.SingleThreadDatabaseInterface.CheckGame(rowId, out qryRowId, out qryRowPW);
         }
     }
 }

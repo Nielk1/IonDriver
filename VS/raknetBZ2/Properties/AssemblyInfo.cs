@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("raknet")]
+[assembly: AssemblyTitle("raknetBZ2")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("raknet")]
+[assembly: AssemblyProduct("raknetBZ2")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("0e22bcb6-056f-4c8b-83cb-2681e5896822")]
+[assembly: Guid("c69c17fa-3c3e-4e53-929f-9173346f5ca6")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -29,7 +29,8 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-// You can specify all the values or you can default the Revision and Build Numbers 
+// You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+// [assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("0.0.1.0")]
+[assembly: AssemblyFileVersion("0.0.1.0")]

@@ -12,7 +12,7 @@ namespace raknet
         public string addr;
         public long clientReqId;
         public long timeoutSec;
-        public string updatePw; //"PandemicRIP"
+        //public string updatePw; //"PandemicRIP"
         public DateTime lastUpdate;
         public string rowPW;
         public long rowId;

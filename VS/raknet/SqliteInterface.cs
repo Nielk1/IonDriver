@@ -41,7 +41,7 @@ namespace raknet
 
         ~SqliteInterface()
         {
-            cnn.Close();
+            //cnn.Close();
         }
 
         public void CleanStaleGames()
@@ -82,22 +82,23 @@ namespace raknet
                     mycommand.Parameters.Add(myparam);
 
                     myparam.Value = __gameId;
-                    SQLiteDataReader reader = mycommand.ExecuteReader();
-
-                    if (reader.HasRows)
+                    using (SQLiteDataReader reader = mycommand.ExecuteReader())
                     {
-                        while (reader.Read())
+                        if (reader.HasRows)
                         {
-                            games.Add(new GameData()
+                            while (reader.Read())
                             {
-                                rowId = (long)reader["rowId"],
-                                lastUpdate = (DateTime)reader["lastUpdate"],
-                                timeoutSec = (long)reader["timeoutSec"],
-                                rowPW = (string)reader["rowPW"],
-                                clientReqId = (long)reader["clientReqId"],
-                                addr = (string)reader["addr"],
-                                gameId = __gameId
-                            });
+                                games.Add(new GameData()
+                                {
+                                    rowId = (long)reader["rowId"],
+                                    lastUpdate = (DateTime)reader["lastUpdate"],
+                                    timeoutSec = (long)reader["timeoutSec"],
+                                    rowPW = (string)reader["rowPW"],
+                                    clientReqId = (long)reader["clientReqId"],
+                                    addr = (string)reader["addr"],
+                                    gameId = __gameId
+                                });
+                            }
                         }
                     }
                 }
@@ -111,20 +112,21 @@ namespace raknet
                     games.ForEach(dr =>
                     {
                         myparam.Value = dr.rowId;
-                        SQLiteDataReader reader = mycommand.ExecuteReader();
-
-                        if (reader.HasRows)
+                        using (SQLiteDataReader reader = mycommand.ExecuteReader())
                         {
-                            while (reader.Read())
+                            if (reader.HasRows)
                             {
-                                switch ((long)reader["type"])
+                                while (reader.Read())
                                 {
-                                    case 0:
-                                        dr.customValues[(string)reader["key"]] = new JValue((string)reader["string"]);
-                                        break;
-                                    case 1:
-                                        dr.customValues[(string)reader["key"]] = new JValue((long)reader["integer"]);
-                                        break;
+                                    switch ((long)reader["type"])
+                                    {
+                                        case 0:
+                                            dr.customValues[(string)reader["key"]] = new JValue((string)reader["string"]);
+                                            break;
+                                        case 1:
+                                            dr.customValues[(string)reader["key"]] = new JValue((long)reader["integer"]);
+                                            break;
+                                    }
                                 }
                             }
                         }
@@ -348,7 +350,7 @@ namespace raknet
             }
         }
 
-        public void CheckGame(string iP, long clientReqId, out long qryRowId, out string qryRowPW)
+        public void CheckGame(string iP, long? clientReqId, out long qryRowId, out string qryRowPW)
         {
             lock (FileInteractionLock)//using (SQLiteConnection cnn = GetConnection())
             {
@@ -357,13 +359,21 @@ namespace raknet
                     SQLiteParameter myparam1 = new SQLiteParameter();
                     SQLiteParameter myparam2 = new SQLiteParameter();
 
-                    mycommand.CommandText = "SELECT rowId, rowPW FROM gamelist WHERE addr =? AND clientReqId =?";
+                    mycommand.CommandText = "SELECT rowId, rowPW FROM gamelist WHERE addr =? AND (? IS NULL OR clientReqId =?)";
                     mycommand.Parameters.Add(myparam1);
+                    mycommand.Parameters.Add(myparam2);
                     mycommand.Parameters.Add(myparam2);
 
 
                     myparam1.Value = iP;
-                    myparam2.Value = clientReqId;
+                    if (clientReqId.HasValue)
+                    {
+                        myparam2.Value = clientReqId.Value;
+                    }
+                    else
+                    {
+                        myparam2.Value = null;
+                    }
                     SQLiteDataReader reader = mycommand.ExecuteReader();
 
                     if (!reader.HasRows)
@@ -380,7 +390,7 @@ namespace raknet
             }
         }
 
-        public void CheckGame(long rowId, out string qryRowPW)
+        public void CheckGame(long rowId, out long qryRowId, out string qryRowPW)
         {
             lock (FileInteractionLock)//using (SQLiteConnection cnn = GetConnection())
             {
@@ -392,7 +402,16 @@ namespace raknet
                     myparam.Value = rowId;
                     object resp = mycommand.ExecuteScalar();
 
-                    qryRowPW = resp != null ? (string)resp : null;
+                    if(resp != null)
+                    {
+                        qryRowPW = (string)resp;
+                        qryRowId = rowId;
+                    }
+                    else
+                    {
+                        qryRowPW = null;
+                        qryRowId = -1;
+                    }
                 }
             }
         }
