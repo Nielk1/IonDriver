@@ -10,19 +10,29 @@
 );
 
 
+--CREATE TABLE gameattr (
+--    gameRowId INTEGER      REFERENCES gamelist (rowId) ON DELETE CASCADE
+--                           NOT NULL,
+--    [key]     VARCHAR (15) NOT NULL,
+--    type      INTEGER      NOT NULL,
+--    string    STRING (255),
+--    integer   INTEGER,
+--    PRIMARY KEY (
+--        gameRowId ASC,
+--        [key] ASC
+--    )
+--);
+
 CREATE TABLE gameattr (
     gameRowId INTEGER      REFERENCES gamelist (rowId) ON DELETE CASCADE
                            NOT NULL,
     [key]     VARCHAR (15) NOT NULL,
-    type      INTEGER      NOT NULL,
-    string    STRING (255),
-    integer   INTEGER,
+    [value]   STRING (255) NOT NULL,
     PRIMARY KEY (
         gameRowId ASC,
         [key] ASC
     )
 );
-
 
 CREATE TRIGGER delete_attrs BEFORE DELETE ON gamelist FOR EACH ROW
 BEGIN

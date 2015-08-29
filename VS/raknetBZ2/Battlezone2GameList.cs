@@ -19,6 +19,8 @@ namespace raknetBZ2
 
         public List<GameData> PreProcessGameList(List<GameData> rawGames)
         {
+            long rowIdCounter = -1;
+
             {
                 GameData hardCodedGame = new GameData()
                 {
@@ -26,7 +28,7 @@ namespace raknetBZ2
                     clientReqId = 0,
                     gameId = "BZ2",
                     lastUpdate = DateTime.UtcNow,
-                    rowId = 0,
+                    rowId = rowIdCounter--,
                     rowPW = string.Empty,
                     timeoutSec = 300,
                     //updatePw = string.Empty
@@ -42,48 +44,50 @@ namespace raknetBZ2
                 rawGames.Add(hardCodedGame);
             }
 
-            WebRequest myWebRequest = WebRequest.Create(@"http://gamelist.kebbz.com/testServer?__gameId=BZ2");
-            myWebRequest.Timeout = 1000; // 1 second
-
-            try
             {
-                using (WebResponse myWebResponse = myWebRequest.GetResponse())
-                {
-                    using (var reader = new StreamReader(myWebResponse.GetResponseStream()))
-                    {
-                        JObject kebbzData = JObject.Parse(reader.ReadToEnd());
+                WebRequest myWebRequest = WebRequest.Create(@"http://gamelist.kebbz.com/testServer?__gameId=BZ2");
+                myWebRequest.Timeout = 1000; // 1 second
 
-                        ((JArray)(kebbzData["GET"])).Cast<JObject>().ToList().ForEach(dr =>
+                try
+                {
+                    using (WebResponse myWebResponse = myWebRequest.GetResponse())
+                    {
+                        using (var reader = new StreamReader(myWebResponse.GetResponseStream()))
                         {
-                            try
+                            JObject kebbzData = JObject.Parse(reader.ReadToEnd());
+
+                            ((JArray)(kebbzData["GET"])).Cast<JObject>().ToList().ForEach(dr =>
                             {
-                                GameData kebbzGame = new GameData()
+                                try
                                 {
-                                    addr = dr["__addr"].Value<string>(),
-                                    clientReqId = dr["__clientReqId"].Value<long>(),
-                                    gameId = dr["__gameId"].Value<string>(),
-                                    lastUpdate = DateTime.UtcNow,
-                                    rowId = 0,
-                                    rowPW = string.Empty,
-                                    timeoutSec = dr["__timeoutSec"].Value<long>(),
+                                    GameData kebbzGame = new GameData()
+                                    {
+                                        addr = dr["__addr"].Value<string>(),
+                                        clientReqId = dr["__clientReqId"].Value<long>(),
+                                        gameId = dr["__gameId"].Value<string>(),
+                                        lastUpdate = DateTime.UtcNow,
+                                        rowId = rowIdCounter--,
+                                        rowPW = string.Empty,
+                                        timeoutSec = dr["__timeoutSec"].Value<long>(),
                                     //updatePw = string.Empty
                                 };
-                                dr.Properties().ToList().ForEach(dx =>
-                                {
-                                    if (!dx.Name.StartsWith("__"))
+                                    dr.Properties().ToList().ForEach(dx =>
                                     {
-                                        kebbzGame.customValues[dx.Name] = (JValue)dx.Value;
-                                    }
-                                });
+                                        if (!dx.Name.StartsWith("__"))
+                                        {
+                                            kebbzGame.customValues[dx.Name] = (JValue)dx.Value;
+                                        }
+                                    });
 
-                                rawGames.Add(kebbzGame);
-                            }
-                            catch { }
-                        });
+                                    rawGames.Add(kebbzGame);
+                                }
+                                catch { }
+                            });
+                        }
                     }
                 }
+                catch { }
             }
-            catch { }
 
             return rawGames;
         }

@@ -106,7 +106,7 @@ namespace raknet
                 {
                     SQLiteParameter myparam = new SQLiteParameter();
 
-                    mycommand.CommandText = "SELECT rowID,key,type,string,integer FROM gameattr WHERE gameRowId = ?";
+                    mycommand.CommandText = "SELECT rowID,key,value FROM gameattr WHERE gameRowId = ?";
                     mycommand.Parameters.Add(myparam);
 
                     games.ForEach(dr =>
@@ -118,15 +118,7 @@ namespace raknet
                             {
                                 while (reader.Read())
                                 {
-                                    switch ((long)reader["type"])
-                                    {
-                                        case 0:
-                                            dr.customValues[(string)reader["key"]] = new JValue((string)reader["string"]);
-                                            break;
-                                        case 1:
-                                            dr.customValues[(string)reader["key"]] = new JValue((long)reader["integer"]);
-                                            break;
-                                    }
+                                    dr.customValues[(string)reader["key"]] = new JValue((string)reader["value"]);
                                 }
                             }
                         }
@@ -192,41 +184,17 @@ namespace raknet
                         SQLiteParameter myparam1 = new SQLiteParameter();
                         SQLiteParameter myparam2 = new SQLiteParameter();
                         SQLiteParameter myparam3 = new SQLiteParameter();
-                        SQLiteParameter myparam4 = new SQLiteParameter();
-                        SQLiteParameter myparam5 = new SQLiteParameter();
 
-                        mycommand.CommandText = "INSERT INTO gameattr (gameRowId,key,type,string,integer) VALUES (?,?,?,?,?)";
+                        mycommand.CommandText = "INSERT INTO gameattr (gameRowId,key,value) VALUES (?,?,?)";
                         mycommand.Parameters.Add(myparam1);
                         mycommand.Parameters.Add(myparam2);
                         mycommand.Parameters.Add(myparam3);
-                        mycommand.Parameters.Add(myparam4);
-                        mycommand.Parameters.Add(myparam5);
 
                         myparam1.Value = gameRow;
                         customValues.ToList().ForEach(dr =>
                         {
                             myparam2.Value = dr.Key;
-
-                            myparam4.Value = null;
-                            myparam5.Value = null;
-
-                            switch (dr.Value.Type)
-                            {
-                                case JTokenType.String:
-                                    {
-                                        myparam3.Value = 0;
-                                        myparam4.Value = dr.Value.Value<string>();
-                                        myparam5.Value = null;
-                                    }
-                                    break;
-                                case JTokenType.Integer:
-                                    {
-                                        myparam3.Value = 1;
-                                        myparam4.Value = null;
-                                        myparam5.Value = dr.Value.Value<int>();
-                                    }
-                                    break;
-                            }
+                            myparam3.Value = dr.Value.Value<string>();
 
                             mycommand.ExecuteNonQuery();
                         });
@@ -304,41 +272,17 @@ namespace raknet
                         SQLiteParameter myparam1 = new SQLiteParameter();
                         SQLiteParameter myparam2 = new SQLiteParameter();
                         SQLiteParameter myparam3 = new SQLiteParameter();
-                        SQLiteParameter myparam4 = new SQLiteParameter();
-                        SQLiteParameter myparam5 = new SQLiteParameter();
 
-                        mycommand.CommandText = "INSERT INTO gameattr (gameRowId,key,type,string,integer) VALUES (?,?,?,?,?)";
+                        mycommand.CommandText = "INSERT INTO gameattr (gameRowId,key,value) VALUES (?,?,?)";
                         mycommand.Parameters.Add(myparam1);
                         mycommand.Parameters.Add(myparam2);
                         mycommand.Parameters.Add(myparam3);
-                        mycommand.Parameters.Add(myparam4);
-                        mycommand.Parameters.Add(myparam5);
 
                         myparam1.Value = gameRow;
                         customValues.ToList().ForEach(dr =>
                         {
                             myparam2.Value = dr.Key;
-
-                            myparam4.Value = null;
-                            myparam5.Value = null;
-
-                            switch (dr.Value.Type)
-                            {
-                                case JTokenType.String:
-                                    {
-                                        myparam3.Value = 0;
-                                        myparam4.Value = dr.Value.Value<string>();
-                                        myparam5.Value = null;
-                                    }
-                                    break;
-                                case JTokenType.Integer:
-                                    {
-                                        myparam3.Value = 1;
-                                        myparam4.Value = null;
-                                        myparam5.Value = dr.Value.Value<int>();
-                                    }
-                                    break;
-                            }
+                            myparam3.Value = dr.Value.Value<string>();
 
                             mycommand.ExecuteNonQuery();
                         });
