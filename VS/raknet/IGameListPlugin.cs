@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,18 @@ namespace raknet
         Version Version { get; }
         string DisplayName { get; }
 
-        List<GameData> PreProcessGameList(List<GameData> rawGames);
+        /// <summary>
+        /// Change to alter QueryString values.
+        /// </summary>
+        /// <param name="queryString"></param>
+        void InterceptQueryStringForGet(ref NameValueCollection queryString);
+
+        /// <summary>
+        /// Alterations to the game list may be made here immediatly after the database lookup
+        /// </summary>
+        /// <param name="queryString"></param>
+        /// <param name="rawGames"></param>
+        void PreProcessGameList(NameValueCollection queryString, ref List<GameData> rawGames);
 
 
 

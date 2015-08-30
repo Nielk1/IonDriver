@@ -2,6 +2,7 @@
 using raknet;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -14,17 +15,35 @@ namespace raknetBZ2
     {
         public string GameID { get { return "BZ2"; } }
         public string Name { get { return "Battlezone 2 GameList"; } }
-        public Version Version { get { return typeof(Battlezone2GameList).Assembly.GetName().Version; /*new Version(0, 0, 1, 0);*/ } }
+        public Version Version { get { return typeof(Battlezone2GameList).Assembly.GetName().Version; } }
         public string DisplayName { get { return Name + @" (" + Version.ToString() + @")"; } }
 
-        public List<GameData> PreProcessGameList(List<GameData> rawGames)
+        private object KebbzLock = new object();
+        private JObject KebbzData;
+        private DateTime KebbzDataDate;
+
+        public void InterceptQueryStringForGet(ref NameValueCollection queryString) { }
+
+        public void PreProcessGameList(NameValueCollection queryString, ref List<GameData> rawGames)
         {
-            long rowIdCounter = -1;
+            bool DoProxy = true;
+            if (queryString["__pluginProxy"] != null && !bool.TryParse(queryString["__pluginProxy"], out DoProxy))
+            {
+                DoProxy = true;
+            }
+
+            bool ShowSource = false;
+            if (queryString["__pluginShowSource"] != null && !bool.TryParse(queryString["__pluginShowSource"], out ShowSource))
+            {
+                ShowSource = false;
+            }
+
+            long rowIdCounter = 0;
 
             {
                 GameData hardCodedGame = new GameData()
                 {
-                    addr = @"0.0.0.0:0",
+                    addr = @"0.0.0.0:17771",
                     clientReqId = 0,
                     gameId = "BZ2",
                     lastUpdate = DateTime.UtcNow,
@@ -33,8 +52,8 @@ namespace raknetBZ2
                     timeoutSec = 300,
                     //updatePw = string.Empty
                 };
-                hardCodedGame.customValues["n"] = new JValue(@"TestGame");
-                hardCodedGame.customValues["m"] = new JValue(string.Empty);
+                hardCodedGame.customValues["n"] = new JValue(@"IonDriver - Bismuth");
+                hardCodedGame.customValues["m"] = new JValue(@"bismuth");
                 hardCodedGame.customValues["d"] = new JValue(string.Empty);
                 hardCodedGame.customValues["k"] = new JValue(1);
                 hardCodedGame.customValues["t"] = new JValue(7);
@@ -44,52 +63,73 @@ namespace raknetBZ2
                 rawGames.Add(hardCodedGame);
             }
 
+            if (DoProxy)
             {
-                WebRequest myWebRequest = WebRequest.Create(@"http://gamelist.kebbz.com/testServer?__gameId=BZ2");
-                myWebRequest.Timeout = 1000; // 1 second
-
-                try
+                lock (KebbzLock)
                 {
-                    using (WebResponse myWebResponse = myWebRequest.GetResponse())
+                    if (KebbzData == null || KebbzDataDate == null || KebbzDataDate.AddSeconds(10) < DateTime.UtcNow)
                     {
-                        using (var reader = new StreamReader(myWebResponse.GetResponseStream()))
+                        WebRequest myWebRequest = WebRequest.Create(@"http://gamelist.kebbz.com/testServer?__gameId=BZ2");
+                        myWebRequest.Timeout = 1000; // 1 second
+
+                        try
                         {
-                            JObject kebbzData = JObject.Parse(reader.ReadToEnd());
-
-                            ((JArray)(kebbzData["GET"])).Cast<JObject>().ToList().ForEach(dr =>
+                            using (WebResponse myWebResponse = myWebRequest.GetResponse())
                             {
-                                try
+                                using (var reader = new StreamReader(myWebResponse.GetResponseStream()))
                                 {
-                                    GameData kebbzGame = new GameData()
-                                    {
-                                        addr = dr["__addr"].Value<string>(),
-                                        clientReqId = dr["__clientReqId"].Value<long>(),
-                                        gameId = dr["__gameId"].Value<string>(),
-                                        lastUpdate = DateTime.UtcNow,
-                                        rowId = rowIdCounter--,
-                                        rowPW = string.Empty,
-                                        timeoutSec = dr["__timeoutSec"].Value<long>(),
-                                    //updatePw = string.Empty
-                                };
-                                    dr.Properties().ToList().ForEach(dx =>
-                                    {
-                                        if (!dx.Name.StartsWith("__"))
-                                        {
-                                            kebbzGame.customValues[dx.Name] = (JValue)dx.Value;
-                                        }
-                                    });
-
-                                    rawGames.Add(kebbzGame);
+                                    KebbzData = JObject.Parse(reader.ReadToEnd());
+                                    KebbzDataDate = DateTime.UtcNow;
                                 }
-                                catch { }
-                            });
+                            }
+                        }
+                        catch
+                        {
+                            KebbzData = null;
+                            KebbzDataDate = DateTime.UtcNow;
                         }
                     }
+
+                    if (KebbzData != null)
+                    {
+                        rawGames.AddRange(((JArray)(KebbzData["GET"])).Cast<JObject>().ToList().Select(dr =>
+                        {
+                            try
+                            {
+                                GameData kebbzGame = new GameData()
+                                {
+                                    addr = dr["__addr"].Value<string>(),
+                                    clientReqId = dr["__clientReqId"].Value<long>(),
+                                    gameId = dr["__gameId"].Value<string>(),
+                                    lastUpdate = DateTime.UtcNow,
+                                    rowId = rowIdCounter--,
+                                    rowPW = string.Empty,
+                                    timeoutSec = dr["__timeoutSec"].Value<long>(),
+                                    //updatePw = string.Empty
+                                };
+
+                                dr.Properties().ToList().ForEach(dx =>
+                                {
+                                    if (!dx.Name.StartsWith("__"))
+                                    {
+                                        kebbzGame.customValues[dx.Name] = (JValue)dx.Value;
+                                    }
+                                });
+
+                                if(ShowSource)
+                                    kebbzGame.customValues["proxySource"] = new JValue("gamelist.kebbz.com");
+
+                                //rawGames.Add(kebbzGame);
+                                return kebbzGame;
+                            }
+                            catch { }
+                            return null;
+                        }).Where(dr => dr != null));
+                    }
                 }
-                catch { }
             }
 
-            return rawGames;
+            //return rawGames;
         }
     }
 }

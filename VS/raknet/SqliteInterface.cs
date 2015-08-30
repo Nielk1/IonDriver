@@ -26,7 +26,7 @@ namespace raknet
 
         private SQLiteConnection cnn;
 
-        private System.Object FileInteractionLock = new System.Object();
+        private object FileInteractionLock = new object();
 
         private SqliteInterface()
         {

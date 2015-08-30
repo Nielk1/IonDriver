@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -71,14 +72,18 @@ namespace raknet
             IGameListPlugin Plugin = null;
             ((Global)(context.ApplicationInstance)).GameListPlugins.TryGetValue(__gameId, out Plugin);
 
-            string geoIP = context.Request.QueryString["__geoIP"];
+            NameValueCollection QueryString = context.Request.QueryString;
+
+            if (Plugin != null) Plugin.InterceptQueryStringForGet(ref QueryString);
+
+            string geoIP = QueryString["__geoIP"];
             if (geoIP == null || geoIP.Length == 0)
             {
                 geoIP = context.Request.UserHostAddress;
             }
 
             List<string> excludedColumns = new List<string>();
-            string strExcludedCols = context.Request.QueryString["__excludeCols"];
+            string strExcludedCols = QueryString["__excludeCols"];
             if (strExcludedCols != null && strExcludedCols.Length > 0)
             {
                 excludedColumns.AddRange(strExcludedCols.Split(','));
@@ -91,7 +96,7 @@ namespace raknet
 
             List<GameData> RawGames = gamelist.GetGames(__gameId);
 
-            if (Plugin != null) RawGames = Plugin.PreProcessGameList(RawGames);
+            if (Plugin != null) Plugin.PreProcessGameList(QueryString, ref RawGames);
 
             RawGames.ForEach(dr =>
             {
